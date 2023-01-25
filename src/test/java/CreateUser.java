@@ -1,4 +1,3 @@
-
 public class CreateUser {
     private String name;
     private String job;
@@ -11,19 +10,17 @@ public class CreateUser {
         this.job = job;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getJob() {
+        return job;
+    }
+
     public CreateUser(String name, String job) {
         this.name = name;
         this.job = job;
     }
-
-    @Override
-    public String toString() {
-        return "{" +
-                "\"name\": \"" + name + "\",\n" +
-                "\"job\": \"" + job + "\"" +
-                "}";
-    }
-
-
 
 }

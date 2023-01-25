@@ -1,20 +1,22 @@
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import model.request.CreateUserJson;
+import model.response.CreateUserResp;
+import model.response.GetListResp;
 import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import java.time.LocalDate;
 
 
-import static io.restassured.RestAssured.given;
-
 public class ApiTests {
 
-    //Напомнить про Postman - перенести генераторы данных в запрос
-
     public final String BASE_URI = "https://reqres.in";
+    // Пример выполнения get запроса без проверок
     @Test
     public void getListUser1() {
-        given()
+        RestAssured.given()
                 .when()
                 .log().all()
                 .get("https://reqres.in/api/users?page=2")
@@ -22,9 +24,10 @@ public class ApiTests {
                 .log().all();
     }
 
+    // Пример выполнения get запроса с проверкой полей с помощью TestNg
     @Test
     public void getListUser2() {
-        Response response = given()
+        Response response = RestAssured.given()
                 .when()
                 .baseUri(BASE_URI)
                 .log().all()
@@ -38,9 +41,10 @@ public class ApiTests {
         Assert.assertEquals(response.body().jsonPath().getString("data[0].email"), "michael.lawson@reqres.in", "The actual email does not match the expected email");
     }
 
+    // Пример выполнения get запроса с проверкой полей с помощью Rest Assured
     @Test
     public void getListUser3() {
-        given()
+        RestAssured.given()
                 .when()
                 .baseUri(BASE_URI)
                 .log().all()
@@ -62,7 +66,7 @@ public class ApiTests {
                 "    \"job\": \"leader\"\n" +
                 "}";
 
-        given()
+        RestAssured.given()
                 .header("Content-type", "application/json")
                 .body(body)
                 .when()
@@ -78,13 +82,13 @@ public class ApiTests {
     @Test
     public void createUser2() {
         CreateUser user = new CreateUser("morpheus", "leader");
-        given()
+        RestAssured.given()
                 .header("Content-type", "application/json")
-                .body(user.toString())
+                .body(user)
                 .when()
                 .baseUri(BASE_URI)
                 .log().all()
-                .post(BASE_URI + "/api/users")
+                .post("/api/users")
                 .then()
                 .log().all()
                 .assertThat()
@@ -93,10 +97,11 @@ public class ApiTests {
                 .body("createdAt", Matchers.containsString(LocalDate.now().toString()));
     }
 
+
     @Test
-    public void createUser3() {
-        CreateUserJson user = new CreateUserJson("morpheus", "leader");
-        given()
+    public void createUser_5() {
+        CreateUser user = new CreateUser("morpheus", "leader");
+        CreateUserResp createUserResp = RestAssured.given()
                 .header("Content-type", "application/json")
                 .body(user)
                 .when()
@@ -105,13 +110,44 @@ public class ApiTests {
                 .post(BASE_URI + "/api/users")
                 .then()
                 .log().all()
-                .assertThat()
-                .body("name", Matchers.equalTo("morpheus"))
-                .body("job", Matchers.equalTo("leader"))
-                .body("createdAt", Matchers.containsString(LocalDate.now().toString()));
+                .extract().as(CreateUserResp.class);
+        Assert.assertEquals(createUserResp.name, "morpheus");
+        Assert.assertTrue(createUserResp.createdAt.contains(LocalDate.now().toString()));
+
     }
 
+    @Test
+    public void createUser_6() {
+        CreateUserJson user = new CreateUserJson("owoeoe");
+        CreateUserResp createUserResp = RestAssured.given()
+                .header("Content-type", "application/json")
+                .body(user)
+                .when()
+                .baseUri(BASE_URI)
+                .log().all()
+                .post(BASE_URI + "/api/users")
+                .then()
+                .log().all()
+                .extract().as(CreateUserResp.class);
+        Assert.assertEquals(createUserResp.name, "morpheus");
+        Assert.assertTrue(createUserResp.createdAt.contains(LocalDate.now().toString()));
 
+    }
 
+//    https://json2csharp.com/code-converters/json-to-pojo
+
+    @Test
+    public void getListUserRespClass() {
+        GetListResp getListResp = RestAssured.given()
+                .when()
+                .baseUri(BASE_URI)
+                .log().all()
+                .get("/api/users?page=2")
+                .then()
+                .log().all()
+                .extract().as(GetListResp.class);
+        Assert.assertEquals(getListResp.data.get(5).first_name, "Rachel");
+
+    }
 
 }
